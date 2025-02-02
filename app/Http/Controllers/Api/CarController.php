@@ -16,11 +16,19 @@ class CarController extends Controller
    *
    * @return mixed
    */
-  public function index()
+  public function index(Request $request)
   {
-    return Cache::remember('cars.all', 3600, function () {
-      return Car::all();
-    });
+    $query = Car::query();
+
+    // Handle sorting
+    $sortField = $request->input('sort', 'year');  // Default sort by year
+    $sortDirection = $request->input('direction', 'desc');  // Default direction
+
+    if (in_array($sortField, ['year', 'brand'])) {
+      $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+    }
+
+    return $query->get();
   }
 
   /**
