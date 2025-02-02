@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: Car Fleet Management API
+  version: 1.0.0
+  description: API for managing car fleet with CRUD operations
+
+servers:
+  - url: /api
+    description: API base URL
+
+paths:
+  /cars:
+    get:
+      summary: Get all cars
+      description: Retrieve a list of all cars with optional sorting
+      parameters:
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [year, brand]
+          description: Field to sort by
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort direction
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Car'
+
+    post:
+      summary: Create a new car
+      description: Add a new car to the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarInput'
+      responses:
+        '201':
+          description: Car created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /cars/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: Car ID
+
+    put:
+      summary: Update a car
+      description: Update an existing car's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarInput'
+      responses:
+        '200':
+          description: Car updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '404':
+          description: Car not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    delete:
+      summary: Delete a car
+      description: Remove a car from the database
+      responses:
+        '204':
+          description: Car deleted successfully
+        '404':
+          description: Car not found
+
+  /car-options/makes:
+    get:
+      summary: Get all car makes
+      description: Retrieve list of all car makes from NHTSA database
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Make'
+
+  /car-options/models/{make}:
+    get:
+      summary: Get models for make
+      description: Retrieve list of models for specified make from NHTSA database
+      parameters:
+        - in: path
+          name: make
+          required: true
+          schema:
+            type: string
+          description: Car make/brand name
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Model'
+
+components:
+  schemas:
+    CarInput:
+      type: object
+      required:
+        - brand
+        - model
+        - year
+        - price
+      properties:
+        brand:
+          type: string
+          maxLength: 255
+        model:
+          type: string
+          maxLength: 255
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 2025
+        price:
+          type: number
+          format: float
+          minimum: 0
+
+    Car:
+      allOf:
+        - $ref: '#/components/schemas/CarInput'
+        - type: object
+          properties:
+            id:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    Make:
+      type: object
+      properties:
+        Make_ID:
+          type: integer
+        Make_Name:
+          type: string
+
+    Model:
+      type: object
+      properties:
+        Model_ID:
+          type: integer
+        Model_Name:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            brand: ["The brand field is required"]
+            price: ["The price must be greater than 0"]
