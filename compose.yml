@@ -192,18 +192,20 @@ services:
 #    image: gotenberg/gotenberg
 #    container_name: "${PROJECT_NAME}_gotenberg"
 
-#  node:
-#    image: wodby/node:$NODE_TAG
-#    container_name: "${PROJECT_NAME}_node"
-#    working_dir: /app
-#    labels:
-#    - "traefik.http.services.${PROJECT_NAME}_node.loadbalancer.server.port=3000"
-#    - "traefik.http.routers.${PROJECT_NAME}_node.rule=Host(`node.${PROJECT_BASE_URL}`)"
-#    expose:
-#    - "3000"
-#    volumes:
-#    - ./path/to/your/single-page-app:/app
-#    command: sh -c 'npm install && npm run start'
+  node:
+    image: wodby/node:$NODE_TAG
+    container_name: "${PROJECT_NAME}_node"
+    labels:
+      - "traefik.http.services.${PROJECT_NAME}_node.loadbalancer.server.port=3000"
+      - "traefik.http.routers.${PROJECT_NAME}_node.rule=Host(`node.${PROJECT_BASE_URL}`)"
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+    ports:
+      - "5174:5173"
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - HOST=0.0.0.0
 
 #  webgrind:
 #    image: wodby/webgrind:$WEBGRIND_TAG
